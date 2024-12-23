@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyTicTacToe</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to right, #4158D0, #C850C0, #FFCC70);
+      font-family: 'Poppins', sans-serif;
+      color: white;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      width: 90vw;
+      max-width: 400px;
+      aspect-ratio: 1;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    }
+
+    .cell {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3.5rem;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .cell:hover {
+      transform: scale(1.05);
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .cell.taken {
+      pointer-events: none;
+    }
+
+    .result {
+      margin: 30px 0;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 600;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .reset-btn {
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(5px);
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .reset-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .cell.taken {
+      animation: popIn 0.3s ease-out;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .button-container {
+      display: flex;
+      gap: 15px;
+      margin-top: 20px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container" id="board"></div>
+  <div class="result" id="result"></div>
+  <div class="button-container">
+    <button class="reset-btn" id="reset">Restart Game</button>
+    <button class="reset-btn" id="logout">Logout</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKVkumaZj5Y_jAIEEise019uviCpeb7FM",
+      authDomain: "subodh-4e5ba.firebaseapp.com",
+      projectId: "subodh-4e5ba",
+      storageBucket: "subodh-4e5ba.firebaseapp.com",
+      messagingSenderId: "25788853245",
+      appId: "1:25788853245:web:a7b43e6279f679e9698794",
+      measurementId: "G-J1STZ8X4E5"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Check authentication state
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Redirect to login if not authenticated
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Logout function
+    const handleLogout = async () => {
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    };
+
+    // Add logout button event listener
+    document.getElementById('logout').addEventListener('click', handleLogout);
+
+    const board = document.getElementById('board');
+    const result = document.getElementById('result');
+    const resetBtn = document.getElementById('reset');
+    let currentPlayer = 'X';
+    let gameActive = true;
+
+    // Winning combinations
+    const winningCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+    // Create the game board
+    function createBoard() {
+      board.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.index = i;
+        board.appendChild(cell);
+      }
+    }
+
+    // Check for a win or draw
+    function checkResult() {
+      const cells = document.querySelectorAll('.cell');
+      const boardState = Array.from(cells).map(cell => cell.textContent);
+
+      for (const combination of winningCombinations) {
+        const [a, b, c] = combination;
+        if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+          result.textContent = `${currentPlayer} wins!`;
+          gameActive = false;
+          return;
+        }
+      }
+
+      if (boardState.every(cell => cell)) {
+        result.textContent = 'Its a draw!';
+        gameActive = false;
+      }
+    }
+
+    // Handle cell clicks
+    function handleCellClick(e) {
+      const cell = e.target;
+
+      if (cell.classList.contains('taken') || !gameActive) return;
+
+      cell.textContent = currentPlayer;
+      cell.classList.add('taken');
+
+      checkResult();
+
+      if (gameActive) {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        result.textContent = `Player ${currentPlayer}'s turn`;
+      }
+    }
+
+    // Restart the game
+    function resetGame() {
+      gameActive = true;
+      currentPlayer = 'X';
+      result.textContent = `Player ${currentPlayer}'s turn`;
+      createBoard();
+    }
+
+    // Initialize game
+    board.addEventListener('click', handleCellClick);
+    resetBtn.addEventListener('click', resetGame);
+    resetGame();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+
+    <title>Login & Sign Up Form</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 24px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2196f3;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #1976d2;
+        }
+
+        .switch-form {
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .switch-form a {
+            color: #2196f3;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification.success {
+            background: #4caf50;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        .google-signin {
+            margin-top: 16px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .google-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .google-btn img {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sign Up Form -->
+        <div class="form-section" id="signupForm">
+            <h1>Create Account</h1>
+            <form id="signupFormElement">
+                <div class="input-group">
+                    <input type="text" id="signupName" placeholder="Name" required>
+                </div>
+                <div class="input-group">
+                    <input type="email" id="signupEmail" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="signupPassword" placeholder="Password" required>
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+            <div class="switch-form">
+                <a id="showSignin">Already have an account? Sign in</a>
+            </div>
+
+        </div>
+
+        <!-- Sign In Form -->
+        <div class="form-section active" id="signinForm">
+            <h1>Sign in</h1>
+            <form id="signinFormElement">
+                <div class="input-group">
+                    <input type="email" id="signinEmail" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="signinPassword" placeholder="Password" required>
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+            
+            <!-- Add Google Sign In button -->
+            <div class="google-signin">
+                <button id="googleSignInButton" class="google-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+                    Sign in with Google
+                </button>
+            </div>
+            
+            <div class="switch-form">
+                <a id="showSignup">Don't have an account? Sign up</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKVkumaZj5Y_jAIEEise019uviCpeb7FM",
+            authDomain: "subodh-4e5ba.firebaseapp.com",
+            projectId: "subodh-4e5ba",
+            storageBucket: "subodh-4e5ba.firebaseapp.com",
+            messagingSenderId: "25788853245",
+            appId: "1:25788853245:web:a7b43e6279f679e9698794",
+            measurementId: "G-J1STZ8X4E5"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Form Elements
+        const signupForm = document.getElementById('signupForm');
+        const signinForm = document.getElementById('signinForm');
+        const showSignup = document.getElementById('showSignup');
+        const showSignin = document.getElementById('showSignin');
+
+        // Toggle Forms
+        showSignup.addEventListener('click', () => {
+            signinForm.classList.remove('active');
+            signupForm.classList.add('active');
+        });
+
+        showSignin.addEventListener('click', () => {
+            signupForm.classList.remove('active');
+            signinForm.classList.add('active');
+        });
+
+        // Sign Up Handler
+        document.getElementById('signupFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                showNotification('Sign up successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'game.html';
+                }, 2000);
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Sign In Handler
+        document.getElementById('signinFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signinEmail').value;
+            const password = document.getElementById('signinPassword').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showNotification('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'game.html';
+                }, 2000);
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        });
+
+        // Google Sign In Function
+        const signInWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                const result = await signInWithPopup(auth, provider);
+                showNotification(`Welcome, ${result.user.displayName}!`, 'success');
+                setTimeout(() => {
+                    window.location.href = 'game.html';
+                }, 2000);
+            } catch (error) {
+                showNotification(error.message, 'error');
+                console.error("Error during sign-in:", error);
+            }
+        };
+
+        // Add Google Sign In button handler
+        document.getElementById('googleSignInButton').addEventListener('click', signInWithGoogle);
+
+        // Notification Function
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
